@@ -6,53 +6,26 @@ executors:
       - image: cimg/base:current
     resource_class: small
 
-commands:
-  comment-on-rerun:
-    parameters:
-          lookup-envvar:
-            type: env_var_name
-            default: CIRCLE_JOB_RERUN
-    steps:
-      - run:
-          name: comment
-          command: |
-            if [ -n "${<< parameters.lookup-envvar >>}" ]; then
-              echo "I am a re-run!"
-            else
-              echo "This is not a re-run!"
-            fi
-  check-if-rerun:
-    parameters:
-      follow-up-steps:
-        type: steps
-        default:
-          - comment-on-rerun
-    description: 'sets CIRCLE_JOB_RERUN=1 if job is a re-run'
-    steps:
-      - run:
-          name: test
-          command: |
-            echo "export CIRCLE_JOB_RERUN=1" >> $BASH_ENV
-      - steps: << parameters.follow-up-steps >>
-
 jobs:
-  foobar:
+  build:
     executor: base
     steps:
       - checkout
-      - check-if-rerun
-  echo:
-    executor: base
+      - check-processes
+      - run: |
+          sleep 10
+          exit 0
+
+commands:
+  check-processes:
     steps:
-      - run: printenv CIRCLE_JOB
-      - check-if-rerun
-workflows:
-  main:
-    jobs:
-      - echo:
-          name: echo-1
-      - echo:
-          name: echo-2
-  fizzbuzz:
-    jobs:
-      - foobar
+      - run:
+          name: Profile CPU and memory every 2s (background)
+          command: |
+            while true; do
+              sleep 2
+              printf "\n\n$(date)\n"
+              top -b -c -n 1
+              echo "======"
+            done
+          background: true
