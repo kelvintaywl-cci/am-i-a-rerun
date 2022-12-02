@@ -53,6 +53,7 @@ workflows:
           name: echo-1
       - echo:
           name: echo-2
-  fizzbuzz:
-    jobs:
-      - foobar
+      - foobar:
+          requires:
+            - echo-1
+            - echo-2
